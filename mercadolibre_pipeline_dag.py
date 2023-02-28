@@ -20,6 +20,7 @@ def extract_list_of_categories() -> list:
 
 def extract_category(category_id: str) -> dict:
     '''Extracts product results from a single category ID and returns a dictionary with it'''
+    CATEGORY_SEARCH_URL = "https://api.mercadolibre.com/sites/MLA/search?category={}#json"
     json_response = requests.get(CATEGORY_SEARCH_URL.format(category_id)) # Gets raw JSON response from category URL
     dict_response = json.loads(json_response.text) # Loads JSON data into a Python dictionary
 
@@ -27,8 +28,7 @@ def extract_category(category_id: str) -> dict:
 
 def extract_and_transform_step():
     '''First step of the DAG, extracts and processes the data to generate a SQL output'''
-    # First we define a single category URL and a master PRODUCTS list
-    CATEGORY_SEARCH_URL = "https://api.mercadolibre.com/sites/MLA/search?category={}#json"
+    # First we define a master PRODUCTS list
     PRODUCTS = []
     
     # Now we build the categories list so we can iterate through it and add information to the PRODUCTS list:
@@ -86,5 +86,3 @@ with DAG(
     )
 
     extract_and_transform_step >> create_table_if >> load_step
-
-    
