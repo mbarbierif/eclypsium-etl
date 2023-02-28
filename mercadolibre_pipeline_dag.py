@@ -53,7 +53,7 @@ def extract_and_transform_step():
         file.write("")
     
     with open("/home/airflow/gcs/data/daily_products.sql", "a") as file:
-        for r in df.iterrows():
+        for i, r in df.iterrows():
             line = f"INSERT INTO products VALUES ('{r.id}','{r.site_id}','{r.title}','{r.price}','{r.sold_quantity}','{r.thumbnail}','{r.created_date}')\n"
             file.write(line)
 
