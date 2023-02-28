@@ -38,7 +38,7 @@ def extract_and_transform_step():
 
     # Now we focus on the required fields in order to build a DataFrame that we can export as SQL
     N = len(PRODUCTS) # This number will be used many times below
-    df = pd.DataFrame(
+    df = pd.DataFrame({
         "id": [PRODUCTS[i]["id"] for i in range(N)],
         "site_id": [PRODUCTS[i]["site_id"] for i in range(N)],
         "title": [PRODUCTS[i]["title"] for i in range(N)],
@@ -46,6 +46,7 @@ def extract_and_transform_step():
         "sold_quantity": [PRODUCTS[i]["sold_quantity"] for i in range(N)],
         "thumbnail": [PRODUCTS[i]["thumbnail"] for i in range(N)],
         "created_date": datetime.now()
+        }
     )
 
     df.to_sql("/home/airflow/gcs/dags/sql/daily_products.sql") # Saves product data as SQL in GCS
