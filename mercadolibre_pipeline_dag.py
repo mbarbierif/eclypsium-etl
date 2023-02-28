@@ -82,11 +82,7 @@ with DAG(
     load_step = PostgresOperator(
         task_id="load_step",
         postgres_conn_id="airflow_db",
-        sql='''
-        \copy products(id, site_id, title, price, sold_quantity, thumbnail, created_date)
-        FROM '/home/airflow/gcs/data/daily_products.csv'
-        DELIMITER ',' CSV HEADER;
-        '''
+        sql="\copy products(id, site_id, title, price, sold_quantity, thumbnail, created_date) FROM '/home/airflow/gcs/data/daily_products.csv' DELIMITER ',' CSV HEADER"
     )
 
     extract_and_transform_step >> create_table_if >> load_step
