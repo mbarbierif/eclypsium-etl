@@ -27,7 +27,7 @@ def extract_category(category_id: str) -> dict:
     return dict_response["results"] # Returns only the results
 
 def extract_and_transform_step():
-    '''First step of the DAG, extracts and processes the data to generate a SQL output'''
+    '''First step of the DAG, extracts and processes the data to generate a CSV output'''
     # First we define a master PRODUCTS list
     PRODUCTS = []
     
@@ -49,7 +49,7 @@ def extract_and_transform_step():
         }
     )
 
-    df.to_sql("/home/airflow/gcs/dags/sql/daily_products.sql") # Saves product data as SQL in GCS
+    df.to_csv("/home/airflow/gcs/data/daily_products.csv", header=True) # Saves product data as a CSV fiile in GCS
 
 # Block II: Definition of Airflow DAG and DB operations:
 with DAG(
@@ -82,7 +82,11 @@ with DAG(
     load_step = PostgresOperator(
         task_id="load_step",
         postgres_conn_id="airflow_db",
-        sql="/home/airflow/gcs/dags/sql/daily_products.sql"
+        sql='''
+        COPY products(id, site_id, title, price, sold_quantity, thumbnail, created_date)
+        FROM '/home/airflow/gcs/data/daily_products.csv'
+        DELIMITER ',' CSV HEADER;
+        '''
     )
 
     extract_and_transform_step >> create_table_if >> load_step
