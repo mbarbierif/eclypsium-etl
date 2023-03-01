@@ -84,7 +84,7 @@ def find_high_volume_sales(**kwargs):
 def email_template_renderer(**kwargs):
     '''Renders email template'''
     ti = kwargs["ti"]
-    data_dict = json.loads(ti.xcom_pull(task_id="find_high_volume_sales"))
+    data_dict = json.loads(ti.xcom_pull(task_ids="find_high_volume_sales"))
     product_list = data_dict["data"]
     email_template_url = "https://raw.githubusercontent.com/mbarbierif/eclypsium-etl/main/email_template.html"
     with open(email_template, "r") as file:
@@ -96,7 +96,7 @@ def email_template_renderer(**kwargs):
 @task.branch(task_id="should_email_be_sent")
 def should_email_be_sent(**kwargs):
     ti = kwargs["ti"]
-    prev = ti.xcom_pull(task_id="find_high_volume_sales")
+    prev = ti.xcom_pull(task_ids="find_high_volume_sales")
     if prev == None:
         return None
     else:
