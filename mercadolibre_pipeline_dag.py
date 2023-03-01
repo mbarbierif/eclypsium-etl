@@ -70,7 +70,7 @@ def find_high_volume_sales(**kwargs):
     logging.info("Finding high volume sales...")
     pg_user, pg_pw, pg_host, pg_db = os.getenv("PG_USER"), os.getenv("PG_PW"), os.getenv("PG_HOST"), os.getenv("PG_DB")
     pg_engine = create_engine(f"postgresql://{pg_user}:{pg_pw}@{pg_host}/{pg_db}")
-    pg_connection = pg_engine.connection()
+    pg_connection = pg_engine.connect()
 
     query_result = pg_connection.execute("SELECT * FROM public.products WHERE price * sold_quantity >= 7000000")
     product_list = list(query_result)
