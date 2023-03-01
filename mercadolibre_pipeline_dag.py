@@ -91,7 +91,7 @@ with DAG(
     load_step = PostgresOperator(
         task_id="load_step",
         postgres_conn_id="airflow_db",
-        sql="/daily_products.sql",
+        sql="daily_products.sql",
         retries=0
     )
 
