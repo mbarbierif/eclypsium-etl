@@ -77,12 +77,13 @@ def find_high_volume_sales(**kwargs):
     if product_list == []: # If there are no products, the email won't be send
         return None
     else:
-        return json.dumps(product_list[:6])
+        return json.dumps({"data": product_list[:6]})
 
 def email_template_renderer(**kwargs):
     '''Renders email template'''
     ti = kwargs["ti"]
-    product_list = json.loads(ti.xcom_pull(task_id="find_high_volume_sales"))
+    data_dict = json.loads(ti.xcom_pull(task_id="find_high_volume_sales"))
+    product_list = data_dict["data"]
     email_template_url = "https://raw.githubusercontent.com/mbarbierif/eclypsium-etl/main/email_template.html"
     with open(email_template, "r") as file:
         template = Template(file.read())
