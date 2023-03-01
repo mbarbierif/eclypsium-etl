@@ -5,10 +5,13 @@ import requests
 import logging
 from datetime import datetime
 from sqlalchemy import create_engine
+from jinja2 import Template
 
 from airflow import DAG
+from airflow.decorators import task
 from airflow.operators.python import PythonOperator
 from airflow.operators.postgres_operator import PostgresOperator
+from airflow.operators.email import EmailOperator
 
 
 # Block I: Definition of Python functions and callables
@@ -60,7 +63,39 @@ def etl_step():
     pg_user, pg_pw, pg_host, pg_db = os.getenv("PG_USER"), os.getenv("PG_PW"), os.getenv("PG_HOST"), os.getenv("PG_DB")
     pg_engine = create_engine(f"postgresql://{pg_user}:{pg_pw}@{pg_host}/{pg_db}")
     df.to_sql(name="products", con=pg_engine, if_exists="replace")
-        
+
+def find_high_volume_sales():
+    '''Finds products in the DB that have sales more or equal than ARS$7.000.000, and sends a sample of them'''
+    # We set up the connection to the database to get the information
+    logging.info("Finding high volume sales...")
+    pg_user, pg_pw, pg_host, pg_db = os.getenv("PG_USER"), os.getenv("PG_PW"), os.getenv("PG_HOST"), os.getenv("PG_DB")
+    pg_engine = create_engine(f"postgresql://{pg_user}:{pg_pw}@{pg_host}/{pg_db}")
+    pg_connection = pg_engine.connection()
+
+    query_result = pg_connection.execute("SELECT * FROM public.products WHERE price * sold_quantity >= 7000000")
+    product_list = list(query_result)
+    if product_list == []: # If there are no products, the email won't be send
+        return None
+    else:
+        return json.dumps(product_list[:6])
+
+def email_template_renderer(ti):
+    '''Renders email template'''
+    product_list = json.loads(ti.xcom_pull(task_id="find_high_volume_sales"))
+    email_template_url = "https://raw.githubusercontent.com/mbarbierif/eclypsium-etl/main/email_template.html"
+    with open(email_template, "r") as file:
+        template = Template(file.read())
+    template.render(products=product_list)
+
+    return template
+
+@task.branch(task_id="should_email_be_sent")
+def should_email_be_sent(ti):
+    prev = ti.xcom_pull(task_id="find_high_volume_sales")
+    if prev == None:
+        return None
+    else:
+        return "send_email"
 
 # Block II: Definition of Airflow DAG and DB operations:
 with DAG(
@@ -76,4 +111,17 @@ with DAG(
         retries=0
     )
 
-    etl_step
+    find_high_volume_sales = PythonOperator(
+        task_id="find_high_volume_sales",
+        python_callable=find_high_volume_sales,
+        xcom_push=True,
+        retries=0
+    )
+
+    send_email = EmailOperator(
+        to="mbarbierif@gmail.com",
+        subject="Daily High Volume Sales Products",
+        html_content=email_template_renderer
+    )
+
+    etl_step >> find_high_volume_sales >> should_email_be_sent >> [send_email]
