@@ -73,7 +73,9 @@ def find_high_volume_sales(**kwargs):
     pg_connection = pg_engine.connect()
 
     query_result = pg_connection.execute("SELECT * FROM public.products WHERE price * sold_quantity >= 7000000")
-    product_list = list(query_result)
+    product_list = [{
+        "id": r[0], "site_id": r[1], "title": r[2], "price": r[3], "sold_quantity": r[4], 
+        "thumbnail": r[5], "created_date": r[6]} for r in query_result]
     if product_list == []: # If there are no products, the email won't be send
         return None
     else:
