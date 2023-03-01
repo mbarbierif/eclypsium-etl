@@ -120,6 +120,8 @@ with DAG(
         retries=0
     )
 
+    should_email_be_sent = should_email_be_sent()
+
     send_email = EmailOperator(
         task_id="send_email",
         to="mbarbierif@gmail.com",
