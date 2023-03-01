@@ -94,8 +94,8 @@ def email_template_renderer(**kwargs):
     return template
 
 @task.branch(task_id="should_email_be_sent")
-def should_email_be_sent(**context):
-    ti = context["task_instance"]
+def should_email_be_sent(**kwargs):
+    ti = kwargs["ti"]
     prev = ti.xcom_pull(task_ids="find_high_volume_sales")
     if prev == None:
         return None
@@ -132,4 +132,4 @@ with DAG(
         html_content=email_template_renderer()
     )
 
-    etl_step >> find_high_volume_sales >> should_email_be_sent >> [send_email]
+    etl_step >> find_high_volume_sales >> should_email_be_sent >> send_email
