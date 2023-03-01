@@ -129,7 +129,7 @@ with DAG(
         task_id="send_email",
         to="mbarbierif@gmail.com",
         subject="Daily High Volume Sales Products",
-        html_content=email_template_renderer
+        html_content=email_template_renderer()
     )
 
     etl_step >> find_high_volume_sales >> should_email_be_sent >> [send_email]
