@@ -61,6 +61,7 @@ def extract_and_transform_step():
 with DAG(
     dag_id="mercadolibre_pipeline",
     default_args={"owner":"Mauricio Barbieri"},
+    template_searchpath="/home/airflow/gcs/dags",
     schedule_interval="0 9 * * *",
     start_date=datetime(2023, 2, 27)
 ) as dag:
@@ -90,7 +91,7 @@ with DAG(
     load_step = PostgresOperator(
         task_id="load_step",
         postgres_conn_id="airflow_db",
-        sql="/home/airflow/gcs/dags/daily_products.sql",
+        sql="/daily_products.sql",
         retries=0
     )
 
