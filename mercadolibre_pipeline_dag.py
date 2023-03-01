@@ -64,7 +64,7 @@ def etl_step():
     pg_engine = create_engine(f"postgresql://{pg_user}:{pg_pw}@{pg_host}/{pg_db}")
     df.to_sql(name="products", con=pg_engine, if_exists="replace")
 
-def find_high_volume_sales():
+def find_high_volume_sales(**kwargs):
     '''Finds products in the DB that have sales more or equal than ARS$7.000.000, and sends a sample of them'''
     # We set up the connection to the database to get the information
     logging.info("Finding high volume sales...")
@@ -79,8 +79,9 @@ def find_high_volume_sales():
     else:
         return json.dumps(product_list[:6])
 
-def email_template_renderer(ti):
+def email_template_renderer(**kwargs):
     '''Renders email template'''
+    ti = kwargs["ti"]
     product_list = json.loads(ti.xcom_pull(task_id="find_high_volume_sales"))
     email_template_url = "https://raw.githubusercontent.com/mbarbierif/eclypsium-etl/main/email_template.html"
     with open(email_template, "r") as file:
@@ -90,7 +91,8 @@ def email_template_renderer(ti):
     return template
 
 @task.branch(task_id="should_email_be_sent")
-def should_email_be_sent(ti):
+def should_email_be_sent(**kwargs):
+    ti = kwargs["ti"]
     prev = ti.xcom_pull(task_id="find_high_volume_sales")
     if prev == None:
         return None
@@ -114,7 +116,7 @@ with DAG(
     find_high_volume_sales = PythonOperator(
         task_id="find_high_volume_sales",
         python_callable=find_high_volume_sales,
-        xcom_push=True,
+        provide_context=True,
         retries=0
     )
 
@@ -122,7 +124,9 @@ with DAG(
         task_id="send_email",
         to="mbarbierif@gmail.com",
         subject="Daily High Volume Sales Products",
-        html_content=email_template_renderer
+        html_content=email_template_renderer,
+        provide_context=True,
+        retries=0
     )
 
     etl_step >> find_high_volume_sales >> should_email_be_sent >> [send_email]
