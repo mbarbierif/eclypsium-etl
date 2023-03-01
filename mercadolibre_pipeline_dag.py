@@ -87,6 +87,8 @@ def compose_email(**kwargs):
     data_dict = json.loads(ti.xcom_pull(task_ids="find_high_volume_sales"))
     product_list = data_dict["data"]
     email_template_url = "https://raw.githubusercontent.com/mbarbierif/eclypsium-etl/main/email_template.html"
+    raw_html = requests.get(email_template_url)
+    email_template = raw_html.text
     with open(email_template, "r") as file:
         template = Template(file.read())
     template.render(products=product_list)
