@@ -77,7 +77,7 @@ with DAG(
 
     create_table_if = PostgresOperator(
         task_id="create_table_if",
-        postgres_conn_id="postgres_wh",
+        postgres_conn_id="airflow_db",
         sql='''
             CREATE TABLE IF NOT EXISTS products (
             id VARCHAR NOT NULL,
@@ -93,7 +93,7 @@ with DAG(
 
     load_step = PostgresOperator(
         task_id="load_step",
-        postgres_conn_id="postgres_wh",
+        postgres_conn_id="airflow_db",
         sql="daily_products.sql",
         retries=0
     )
