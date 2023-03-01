@@ -94,8 +94,8 @@ def email_template_renderer(**kwargs):
     return template
 
 @task.branch(task_id="should_email_be_sent")
-def should_email_be_sent(**kwargs):
-    ti = kwargs["ti"]
+def should_email_be_sent(**context):
+    ti = context["task_instance"]
     prev = ti.xcom_pull(task_ids="find_high_volume_sales")
     if prev == None:
         return None
@@ -105,22 +105,22 @@ def should_email_be_sent(**kwargs):
 # Block II: Definition of Airflow DAG and DB operations:
 with DAG(
     dag_id="mercadolibre_pipeline",
-    default_args={"owner":"Mauricio Barbieri"},
+    default_args={
+        "owner": "Mauricio Barbieri",
+        "retries": 0,
+        "provide_context": True},
     schedule_interval="0 9 * * *",
     start_date=datetime(2023, 2, 27)
 ) as dag:
     
     etl_step = PythonOperator(
         task_id="etl_step",
-        python_callable=etl_step,
-        retries=0
+        python_callable=etl_step
     )
 
     find_high_volume_sales = PythonOperator(
         task_id="find_high_volume_sales",
-        python_callable=find_high_volume_sales,
-        provide_context=True,
-        retries=0
+        python_callable=find_high_volume_sales
     )
 
     should_email_be_sent = should_email_be_sent()
@@ -129,7 +129,7 @@ with DAG(
         task_id="send_email",
         to="mbarbierif@gmail.com",
         subject="Daily High Volume Sales Products",
-        html_content=email_template_renderer()
+        html_content=email_template_renderer(**context)
     )
 
     etl_step >> find_high_volume_sales >> should_email_be_sent >> [send_email]
