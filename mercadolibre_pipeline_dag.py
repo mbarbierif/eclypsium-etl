@@ -119,6 +119,7 @@ with DAG(
     )
 
     send_email = EmailOperator(
+        task_id="send_email",
         to="mbarbierif@gmail.com",
         subject="Daily High Volume Sales Products",
         html_content=email_template_renderer
