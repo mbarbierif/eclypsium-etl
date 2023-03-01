@@ -29,7 +29,7 @@ def extract_category(category_id: str) -> dict:
 
 def extract_and_transform_step():
     '''First step of the DAG, extracts and processes the data to generate a CSV output'''
-    if os.path.exists("/home/airflow/gcs/data/daily_products.sql"):
+    if os.path.exists("/home/airflow/gcs/dags/daily_products.sql"):
         return 0
     else:
         # First we define a master PRODUCTS list
@@ -53,10 +53,10 @@ def extract_and_transform_step():
             }
         )
 
-        with open("/home/airflow/gcs/data/daily_products.sql", "w") as file:
+        with open("/home/airflow/gcs/dags/daily_products.sql", "w") as file:
             file.write("")
         
-        with open("/home/airflow/gcs/data/daily_products.sql", "a") as file:
+        with open("/home/airflow/gcs/dags/daily_products.sql", "a") as file:
             for i, r in df.iterrows():
                 line = f"INSERT INTO products VALUES ('{r.id}','{r.site_id}','{r.title}','{r.price}','{r.sold_quantity}','{r.thumbnail}','{r.created_date}')\n"
                 file.write(line)
@@ -94,7 +94,7 @@ with DAG(
     load_step = PostgresOperator(
         task_id="load_step",
         postgres_conn_id="postgres_wh",
-        sql="/home/airflow/gcs/data/daily_products.sql",
+        sql="/home/airflow/gcs/dags/daily_products.sql",
         retries=0
     )
 
