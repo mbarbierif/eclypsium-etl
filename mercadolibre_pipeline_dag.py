@@ -81,7 +81,7 @@ def find_high_volume_sales(**kwargs):
     else:
         return json.dumps({"data": product_list[:6]})
 
-def email_template_renderer(**kwargs):
+def compose_email(**kwargs):
     '''Renders email template'''
     ti = kwargs["ti"]
     data_dict = json.loads(ti.xcom_pull(task_ids="find_high_volume_sales"))
@@ -100,7 +100,7 @@ def should_email_be_sent(**kwargs):
     if prev == None:
         return None
     else:
-        return "send_email"
+        return "compose_email"
 
 # Block II: Definition of Airflow DAG and DB operations:
 with DAG(
@@ -125,11 +125,16 @@ with DAG(
 
     should_email_be_sent = should_email_be_sent()
 
+    compose_email = PythonOperator(
+        task_id="compose_email",
+        python_callable=compose_email
+    )
+
     send_email = EmailOperator(
         task_id="send_email",
         to="mbarbierif@gmail.com",
         subject="Daily High Volume Sales Products",
-        html_content=email_template_renderer()
+        html_content=ti.xcom_pull(task_id="compose_email")
     )
 
-    etl_step >> find_high_volume_sales >> should_email_be_sent >> send_email
+    etl_step >> find_high_volume_sales >> should_email_be_sent >> compose_email >> send_email
