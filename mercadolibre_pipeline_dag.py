@@ -9,7 +9,7 @@ from jinja2 import Template
 
 from airflow import DAG
 from airflow.decorators import task
-from airflow.operators.python import PythonOperator
+from airflow.operators.python import PythonOperator, ShortCircuitOperator
 from airflow.operators.postgres_operator import PostgresOperator
 from airflow.operators.email import EmailOperator
 
@@ -128,15 +128,14 @@ def compose_email(**kwargs):
 
     return rendered_template
 
-@task.branch(task_id="should_email_be_sent")
 def should_email_be_sent(**kwargs):
-    '''Branching function that decides if the email is sent or not'''
+    '''ShortCircuit function that decides if the email is sent or not'''
     ti = kwargs["ti"]
     prev = ti.xcom_pull(task_ids="find_high_volume_sales")
     if prev == None:
-        return None
+        return False
     else:
-        return "compose_email"
+        return True
 
 # Block II: Definition of Airflow DAG and DB operations:
 with DAG(
@@ -159,7 +158,10 @@ with DAG(
         python_callable=find_high_volume_sales
     )
 
-    should_email_be_sent = should_email_be_sent()
+    should_email_be_sent = ShortCircuitOperator(
+        task_id="should_email_be_sent",
+        python_callable=should_email_be_sent
+    )
 
     compose_email = PythonOperator(
         task_id="compose_email",
