@@ -110,7 +110,7 @@ def compose_email(**kwargs):
                 <th><bold>thumbnail</bold></th>
                 <th><bold>created_date</bold></th>
             </tr>
-            {{% for product in products %}}
+            {% for product in products %}
             <tr>
                 <td>{{ product.id }}</td>
                 <td>{{ product.site_id }}</td>
@@ -120,7 +120,7 @@ def compose_email(**kwargs):
                 <td>{{ product.thumbnail }}</td>
                 <td>{{ product.created_date }}</td>
             </tr>
-            {{% endfor %}}
+            {% endfor %}
         </table>
 
         </body>
