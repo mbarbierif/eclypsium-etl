@@ -62,7 +62,7 @@ def etl_step():
     logging.info("Setting up connection and loading data...")
     pg_user, pg_pw, pg_host, pg_db = os.getenv("PG_USER"), os.getenv("PG_PW"), os.getenv("PG_HOST"), os.getenv("PG_DB")
     pg_engine = create_engine(f"postgresql://{pg_user}:{pg_pw}@{pg_host}/{pg_db}")
-    df.to_sql(name="products", con=pg_engine, if_exists="replace")
+    df.to_sql(name="products", con=pg_engine, if_exists="append")
 
 def find_high_volume_sales(**kwargs):
     '''Finds products in the DB that have sales more or equal than ARS$7.000.000, and sends a sample of them'''
@@ -72,29 +72,27 @@ def find_high_volume_sales(**kwargs):
     pg_engine = create_engine(f"postgresql://{pg_user}:{pg_pw}@{pg_host}/{pg_db}")
     pg_connection = pg_engine.connect()
 
-    query_result = pg_connection.execute("SELECT * FROM public.products WHERE price * sold_quantity >= 7000000")
+    query_result = pg_connection.execute("SELECT * FROM public.products WHERE price * sold_quantity <= 0")
     product_list = [{
-        "id": r[0], "site_id": r[1], "title": r[2], "price": r[3], "sold_quantity": r[4], 
-        "thumbnail": r[5], "created_date": r[6]} for r in query_result]
+        "id": r[0], 
+        "site_id": r[1], 
+        "title": r[2], 
+        "price": r[3], 
+        "sold_quantity": r[4], 
+        "thumbnail": r[5], 
+        "created_date": r[6]} for r in query_result]
     if product_list == []: # If there are no products, the email won't be send
         return None
     else:
-        return json.dumps({"data": product_list[:6]})
+        return json.dumps({"data": product_list})
 
 def compose_email(**kwargs):
     '''Renders email template'''
+    # We pull the data returned by the previous task using XComs
     ti = kwargs["ti"]
     data_dict = json.loads(ti.xcom_pull(task_ids="find_high_volume_sales"))
     product_list = data_dict["data"]
-    '''
-    email_template_url = "https://raw.githubusercontent.com/mbarbierif/eclypsium-etl/main/email_template.html"
-    raw_html = requests.get(email_template_url)
-    email_template = raw_html.text
-    with open(email_template, "r") as file:
-        template = Template(file.read())
-    template.render(products=product_list)
-
-    return template'''
+    # Then we define a Jinja template for the email, we render it and return it
     template = Template('''
         <!DOCTYPE html>
         <html>
@@ -132,6 +130,7 @@ def compose_email(**kwargs):
 
 @task.branch(task_id="should_email_be_sent")
 def should_email_be_sent(**kwargs):
+    '''Branching function that decides if the email is sent or not'''
     ti = kwargs["ti"]
     prev = ti.xcom_pull(task_ids="find_high_volume_sales")
     if prev == None:
@@ -144,9 +143,9 @@ with DAG(
     dag_id="mercadolibre_pipeline",
     default_args={
         "owner": "Mauricio Barbieri",
-        "retries": 0,
-        "provide_context": True},
-    schedule_interval="0 9 * * *",
+        "retries": 0, # Because I needed to debug the DAG, I wanted it to fail immediately if something was wrong
+        "provide_context": True}, # Context is necessary for the use of XComs
+    schedule_interval="0 9 * * *", # We could have used @daily here, but I think 9:00 am is better for this operation
     start_date=datetime(2023, 2, 27)
 ) as dag:
     
