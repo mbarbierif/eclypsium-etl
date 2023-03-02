@@ -169,7 +169,7 @@ with DAG(
 
     send_email = EmailOperator(
         task_id="send_email",
-        to="mbarbierif@gmail.com",
+        to="mbarbierif.ar@gmail.com",
         subject="Daily High Volume Sales Products",
         html_content="{{ ti.xcom_pull(task_ids='compose_email') }}"
     )
