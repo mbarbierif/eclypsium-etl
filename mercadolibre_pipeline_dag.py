@@ -83,6 +83,7 @@ def find_high_volume_sales(**kwargs):
 
 def compose_email(**kwargs):
     '''Renders email template'''
+    '''
     ti = kwargs["ti"]
     data_dict = json.loads(ti.xcom_pull(task_ids="find_high_volume_sales"))
     product_list = data_dict["data"]
@@ -91,6 +92,40 @@ def compose_email(**kwargs):
     email_template = raw_html.text
     with open(email_template, "r") as file:
         template = Template(file.read())
+    template.render(products=product_list)
+
+    return template'''
+    template = Template('''
+        <!DOCTYPE html>
+        <html>
+        <body>
+
+        <table>
+            <tr>
+                <th><bold>id</bold></th>
+                <th><bold>site_id</bold></th>
+                <th><bold>title</bold></th>
+                <th><bold>price</bold></th>
+                <th><bold>sold_quantity</bold></th>
+                <th><bold>thumbnail</bold></th>
+                <th><bold>created_date</bold></th>
+            </tr>
+            {{% for product in products %}}
+            <tr>
+                <td>{{ product.id }}</td>
+                <td>{{ product.site_id }}</td>
+                <td>{{ product.title }}</td>
+                <td>{{ product.price }}</td>
+                <td>{{ product.sold_quantity }}</td>
+                <td>{{ product.thumbnail }}</td>
+                <td>{{ product.created_date }}</td>
+            </tr>
+            {{% endfor %}}
+        </table>
+
+        </body>
+        </html>
+    ''')
     template.render(products=product_list)
 
     return template
