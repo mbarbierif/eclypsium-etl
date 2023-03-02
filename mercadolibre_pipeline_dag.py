@@ -126,9 +126,9 @@ def compose_email(**kwargs):
         </body>
         </html>
     ''')
-    template.render(products=product_list)
+    rendered_template = template.render(products=product_list)
 
-    return template
+    return rendered_template
 
 @task.branch(task_id="should_email_be_sent")
 def should_email_be_sent(**kwargs):
