@@ -171,7 +171,7 @@ with DAG(
         task_id="send_email",
         to="mbarbierif@gmail.com",
         subject="Daily High Volume Sales Products",
-        html_content="{{ ti.xcom_pull(tasks_id='compose_email') }}"
+        html_content="{{ ti.xcom_pull(task_ids='compose_email') }}"
     )
 
     etl_step >> find_high_volume_sales >> should_email_be_sent >> compose_email >> send_email
