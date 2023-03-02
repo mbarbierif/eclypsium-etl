@@ -72,7 +72,7 @@ def find_high_volume_sales(**kwargs):
     pg_engine = create_engine(f"postgresql://{pg_user}:{pg_pw}@{pg_host}/{pg_db}")
     pg_connection = pg_engine.connect()
 
-    query_result = pg_connection.execute("SELECT * FROM public.products WHERE price * sold_quantity <= 0")
+    query_result = pg_connection.execute("SELECT * FROM public.products WHERE price * sold_quantity < -100")
     product_list = [{
         "id": r[0], 
         "site_id": r[1], 
@@ -132,6 +132,7 @@ def should_email_be_sent(**kwargs):
     '''ShortCircuit function that decides if the email is sent or not'''
     ti = kwargs["ti"]
     prev = ti.xcom_pull(task_ids="find_high_volume_sales")
+    logging.info("prev:", type(prev), prev)
     if prev == None:
         return False
     else:
