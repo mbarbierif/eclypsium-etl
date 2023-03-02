@@ -144,7 +144,7 @@ with DAG(
         "owner": "Mauricio Barbieri",
         "retries": 0, # Because I needed to debug the DAG, I wanted it to fail immediately if something was wrong
         "provide_context": True}, # Context is necessary for the use of XComs
-    schedule_interval="0 9 * * *", # We could have used @daily here, but I think 9:00 am is better for this operation
+    schedule_interval="0 12 * * *", # We could have used @daily here, but I think 9:00 am (12:00 pm UTC) is better for this operation
     start_date=datetime(2023, 2, 27)
 ) as dag:
     
