@@ -13,7 +13,7 @@ with airflow.DAG(
         task_id="send-email",
         conn_id="sendgrid_default",
         # You can specify more than one recipient with a list.
-        to="user@example.com",
+        to="mbarbierif.ar@gmail.com",
         subject="EmailOperator test for SendGrid",
         html_content="This is a test message sent through SendGrid.",
         dag=dag,
