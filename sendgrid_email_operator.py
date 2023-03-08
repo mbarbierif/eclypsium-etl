@@ -7,6 +7,7 @@ from airflow.operators.email import EmailOperator
 with airflow.DAG(
     "composer_sample_sendgrid",
     start_date=datetime.datetime(2023, 3, 7),
+    default_args={"retries": 0}
 ) as dag:
 
     task_email = EmailOperator(
