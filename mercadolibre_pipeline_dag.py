@@ -62,7 +62,7 @@ def etl_step():
     logging.info("Setting up connection and loading data...")
     pg_user, pg_pw, pg_host, pg_db = os.getenv("PG_USER"), os.getenv("PG_PW"), os.getenv("PG_HOST"), os.getenv("PG_DB")
     pg_engine = create_engine(f"postgresql://{pg_user}:{pg_pw}@{pg_host}/{pg_db}")
-    df.to_sql(name="products", con=pg_engine, if_exists="append")
+    df.to_sql(name="products", con=pg_engine, if_exists="replace")
 
 def find_high_volume_sales(**kwargs):
     '''Finds products in the DB that have sales more or equal than ARS$7.000.000, and sends a sample of them'''
@@ -72,7 +72,7 @@ def find_high_volume_sales(**kwargs):
     pg_engine = create_engine(f"postgresql://{pg_user}:{pg_pw}@{pg_host}/{pg_db}")
     pg_connection = pg_engine.connect()
 
-    query_result = pg_connection.execute("SELECT * FROM public.products WHERE price * sold_quantity >= 7000000")
+    query_result = pg_connection.execute("SELECT id, site_id, title, price, sold_quantity, thumbnail, TO_CHAR(created_date, 'dd-mm-yyyy') FROM public.products WHERE price * sold_quantity >= 7000000")
     product_list = [{
         "id": r[0], 
         "site_id": r[1], 
